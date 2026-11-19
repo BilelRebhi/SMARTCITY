@@ -1,0 +1,14 @@
+<header class="topbar">
+  <a routerLink="/" class="brand">CampusVerse · Smart Mobility</a>
+  <nav>
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Routes</a>
+    <a routerLink="/road-segments" routerLinkActive="active">Road Segments</a>
+    <a routerLink="/traffic" routerLinkActive="active">Traffic</a>
+    <a routerLink="/accessible-places" routerLinkActive="active">Accessible Places</a>
+    <a routerLink="/feedback" routerLinkActive="active">Feedback</a>
+  </nav>
+</header>
+
+<main class="container">
+  <router-outlet />
+</main>
