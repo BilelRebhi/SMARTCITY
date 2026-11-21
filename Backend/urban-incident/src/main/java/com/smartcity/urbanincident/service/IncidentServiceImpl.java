@@ -2,6 +2,7 @@ package com.smartcity.urbanincident.service;
 
 import com.smartcity.urbanincident.entity.Incident;
 import com.smartcity.urbanincident.enums.IncidentStatus;
+import com.smartcity.urbanincident.exception.ResourceNotFoundException;
 import com.smartcity.urbanincident.repository.IncidentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,53 +15,60 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Transactional
 public class IncidentServiceImpl implements IncidentService {
-    
+
     private final IncidentRepository incidentRepository;
-    
+
     @Override
     public Incident createIncident(Incident incident) {
-        // Implementation will be added
-        return null;
+        return incidentRepository.save(incident);
     }
-    
+
     @Override
     public Incident updateIncident(Long id, Incident incident) {
-        // Implementation will be added
-        return null;
+        if (!incidentRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Incident not found with id: " + id);
+        }
+        incident.setId(id);
+        return incidentRepository.save(incident);
     }
-    
+
     @Override
+    @Transactional(readOnly = true)
     public Optional<Incident> getIncidentById(Long id) {
-        // Implementation will be added
-        return Optional.empty();
+        return incidentRepository.findById(id);
     }
-    
+
     @Override
+    @Transactional(readOnly = true)
     public List<Incident> getAllIncidents() {
-        // Implementation will be added
-        return null;
+        return incidentRepository.findAll();
     }
-    
+
     @Override
+    @Transactional(readOnly = true)
     public List<Incident> getIncidentsByCitizen(Long citizenId) {
-        // Implementation will be added
-        return null;
+        return incidentRepository.findByCitizenId(citizenId);
     }
-    
+
     @Override
+    @Transactional(readOnly = true)
     public List<Incident> getIncidentsByStatus(IncidentStatus status) {
-        // Implementation will be added
-        return null;
+        return incidentRepository.findByStatus(status);
     }
-    
+
     @Override
     public void deleteIncident(Long id) {
-        // Implementation will be added
+        if (!incidentRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Incident not found with id: " + id);
+        }
+        incidentRepository.deleteById(id);
     }
-    
+
     @Override
     public Incident updateIncidentStatus(Long id, IncidentStatus status) {
-        // Implementation will be added
-        return null;
+        Incident incident = incidentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Incident not found with id: " + id));
+        incident.setStatus(status);
+        return incidentRepository.save(incident);
     }
 }

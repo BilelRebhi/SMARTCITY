@@ -23,6 +23,15 @@ public class ApiGatewayApplication {
                         .filters(f -> f.stripPrefix(2))
                         .uri("lb://smart-places-service"))
 
+                // MS2 - Urban Incident Service
+                .route("urban-incident", r -> r
+                        .path("/api/incidents", "/api/incidents/**",
+                              "/api/interventions", "/api/interventions/**",
+                              "/api/work-orders", "/api/work-orders/**",
+                              "/api/notifications", "/api/notifications/**",
+                              "/api/resolution-confirmations", "/api/resolution-confirmations/**")
+                        .uri("lb://urban-incident"))
+
                 .build();
     }
 }
