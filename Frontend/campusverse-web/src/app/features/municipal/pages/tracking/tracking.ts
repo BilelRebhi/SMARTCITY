@@ -1,12 +1,13 @@
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { ApplicationRequest, RequestStatus } from '../../models/municipal.model';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ApplicationRequest, Appointment, SupportingDocument } from '../../models/municipal.model';
 import { MunicipalServiceApi } from '../../services/municipal.service';
 
 @Component({
   selector: 'app-tracking',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink, DatePipe],
   templateUrl: './tracking.html',
   styleUrl: './tracking.css'
 })
@@ -18,6 +19,8 @@ export class TrackingComponent implements OnInit {
   loading = false;
   errorMessage: string | null = null;
   application: ApplicationRequest | null = null;
+  documents: SupportingDocument[] = [];
+  appointments: Appointment[] = [];
 
   ngOnInit(): void {
     const paramId = this.route.snapshot.paramMap.get('id');
@@ -40,6 +43,8 @@ export class TrackingComponent implements OnInit {
       next: (app) => {
         this.loading = false;
         this.application = app;
+        this.loadDocuments(app.id);
+        this.loadAppointments(app.id);
       },
       error: (err) => {
         this.loading = false;
@@ -49,17 +54,41 @@ export class TrackingComponent implements OnInit {
     });
   }
 
-  updateStatus(status: RequestStatus): void {
-    if (!this.application) return;
+  loadDocuments(appId: string): void {
+    this.api.getDocuments(appId).subscribe({
+      next: (docs) => (this.documents = docs),
+      error: () => (this.documents = [])
+    });
+  }
 
-    this.api.updateApplicationStatus(this.application.id, status).subscribe({
-      next: (updated) => {
-        this.application = updated;
+  loadAppointments(appId: string): void {
+    this.api.getAppointmentsByApplication(appId).subscribe({
+      next: (apts) => (this.appointments = apts),
+      error: () => (this.appointments = [])
+    });
+  }
+
+  onUploadDoc(event: Event): void {
+    if (!this.application) return;
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.api.uploadDocument(this.application.id, file).subscribe({
+      next: () => {
+        input.value = '';
+        if (this.application) {
+          this.fetchApplication(this.application.id);
+        }
       },
       error: (err) => {
         this.errorMessage = err.message;
       }
     });
+  }
+
+  getDownloadUrl(docId: string): string {
+    return this.api.getDocumentDownloadUrl(docId);
   }
 
   isStepCompleted(step: number): boolean {
@@ -75,7 +104,7 @@ export class TrackingComponent implements OnInit {
     if (!this.application) return false;
     const s = this.application.status;
     if (step === 1) return s === 'PENDING';
-    if (step === 2) return s === 'IN_REVIEW';
+    if (step === 2) return s === 'IN_REVIEW' || s === 'MISSING_DOCUMENTS';
     if (step === 3) return s === 'APPROVED' || s === 'REJECTED' || s === 'COMPLETED';
     return false;
   }

@@ -32,6 +32,11 @@ public class ApiGatewayApplication {
                               "/api/resolution-confirmations", "/api/resolution-confirmations/**")
                         .uri("lb://urban-incident"))
 
+                // MS5 - Digital Municipal Services
+                .route("municipal-service", r -> r
+                        .path("/api/municipal", "/api/municipal/**")
+                        .uri("lb://municipal-service"))
+
                 .build();
     }
 }

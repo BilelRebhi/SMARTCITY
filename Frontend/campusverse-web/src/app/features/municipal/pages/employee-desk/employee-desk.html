@@ -1,0 +1,137 @@
+<div>
+  <div class="row" style="justify-content: space-between; margin-bottom: 1.5rem;">
+    <div>
+      <h1>Municipal Employee Desk</h1>
+      <p class="muted">Validate completeness of citizen requests, review uploaded documents, and process decisions.</p>
+    </div>
+    <div class="row">
+      <select [(ngModel)]="statusFilter" style="width: 200px;">
+        <option value="">All Statuses</option>
+        <option value="PENDING">PENDING</option>
+        <option value="IN_REVIEW">IN_REVIEW</option>
+        <option value="MISSING_DOCUMENTS">MISSING_DOCUMENTS</option>
+        <option value="APPROVED">APPROVED</option>
+        <option value="REJECTED">REJECTED</option>
+        <option value="COMPLETED">COMPLETED</option>
+      </select>
+      <button class="btn outline small" (click)="loadApplications()">Refresh</button>
+    </div>
+  </div>
+
+  @if (errorMessage) {
+    <div class="alert error">{{ errorMessage }}</div>
+  }
+  @if (successMessage) {
+    <div class="alert success">{{ successMessage }}</div>
+  }
+
+  <div class="desk-layout">
+    <!-- Left: Applications Queue -->
+    <div class="card">
+      <h2 style="margin-top: 0;">Incoming Applications ({{ filteredApplications.length }})</h2>
+      @if (loading) {
+        <p class="muted">Loading applications...</p>
+      } @else if (filteredApplications.length === 0) {
+        <p class="muted">No applications matching filter.</p>
+      } @else {
+        <table>
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Applicant</th>
+              <th>Status</th>
+              <th>Complete?</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (app of filteredApplications; track app.id) {
+              <tr
+                class="app-row"
+                [class.selected]="selectedApp?.id === app.id"
+                (click)="selectApplication(app)"
+              >
+                <td><strong>{{ app.service.name }}</strong></td>
+                <td>{{ app.citizenName || 'Anonymous' }}</td>
+                <td><span class="badge" [class]="app.status">{{ app.status }}</span></td>
+                <td>{{ app.validatedComplete ? '✅ Yes' : '⏳ No' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    <!-- Right: Validation & Processing Panel -->
+    <div class="card">
+      @if (!selectedApp) {
+        <p class="muted">Select an application from the table to inspect documents, validate completeness, and process it.</p>
+      } @else {
+        <div class="row" style="justify-content: space-between;">
+          <h2 style="margin: 0;">{{ selectedApp.service.name }}</h2>
+          <span class="badge" [class]="selectedApp.status">{{ selectedApp.status }}</span>
+        </div>
+        <small class="muted">ID: {{ selectedApp.id }}</small>
+
+        <div style="margin-top: 1rem;">
+          <strong>Applicant:</strong> {{ selectedApp.citizenName || 'Anonymous' }} ({{ selectedApp.citizenEmail || 'No email' }})<br />
+          <strong>Notes:</strong> {{ selectedApp.notes || 'None' }}<br />
+          <strong>Submitted:</strong> {{ selectedApp.submittedAt | date:'medium' }}
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <strong>Required Documents:</strong>
+          <p class="muted" style="margin: 0.25rem 0; font-size: 0.85rem;">{{ selectedApp.service.requirements || 'None specified' }}</p>
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <strong>Uploaded Documents ({{ selectedDocs.length }}):</strong>
+          @if (selectedDocs.length === 0) {
+            <p class="muted" style="font-size: 0.85rem;">No supporting documents attached.</p>
+          } @else {
+            @for (doc of selectedDocs; track doc.id) {
+              <div class="doc-pill">
+                <span>📄 {{ doc.fileName }}</span>
+                <a [href]="getDownloadUrl(doc.id)" target="_blank" class="btn outline small">Download</a>
+              </div>
+            }
+          }
+        </div>
+
+        <div style="margin-top: 1.25rem;">
+          <label for="adminComment">Employee Comment / Missing Docs Note</label>
+          <textarea
+            id="adminComment"
+            rows="2"
+            [(ngModel)]="commentInput"
+            placeholder="e.g. Missing signed housing lease, or All documents verified."
+          ></textarea>
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <label>1. Completeness Validation</label>
+          <div class="row">
+            <button class="btn small" (click)="validate(true)">✓ Mark Complete (In Review)</button>
+            <button class="btn outline small" style="border-color: var(--warning); color: var(--warning);" (click)="validate(false)">
+              ! Request Missing Documents
+            </button>
+          </div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <label>2. Final Processing Decision</label>
+          <div class="row">
+            <button class="btn small" style="background: var(--success); border-color: var(--success);" (click)="processStatus('APPROVED')">
+              Approve
+            </button>
+            <button class="btn small" (click)="processStatus('COMPLETED')">
+              Mark Completed
+            </button>
+            <button class="btn small danger" (click)="processStatus('REJECTED')">
+              Reject
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

@@ -1,0 +1,37 @@
+.desk-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .desk-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.app-row {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.app-row:hover {
+  background: var(--bg);
+}
+
+.app-row.selected {
+  background: #edf2ff;
+}
+
+.doc-pill {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.65rem;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}

@@ -1,21 +1,33 @@
 <div class="form-container">
   <h1>Submit Municipal Application</h1>
-  <p class="muted">Fill out the request form below to file your municipal procedure.</p>
+  <p class="muted">Apply online for municipal documents or permits and attach required supporting files.</p>
 
   @if (submittedApplication) {
     <div class="card success-box">
       <div class="alert success">
-        Application successfully submitted!
+        Application successfully submitted! ({{ uploadedCount }} supporting document(s) attached)
       </div>
       <h2>Your Application Tracking ID</h2>
       <div class="tracking-code">{{ submittedApplication.id }}</div>
       <p class="muted">
-        Save this ID to monitor your application progress in real-time.
+        Save this ID to monitor your application progress, or view it anytime in your Request History.
       </p>
+
+      @if (submittedApplication.service.requiresAppointment) {
+        <div class="alert" style="background: #fff4e0; color: var(--warning); border: 1px solid #f2d59b; text-align: left; margin-top: 1rem;">
+          <strong>In-Person Visit Required:</strong> This service requires an in-person appointment at City Hall.
+        </div>
+      }
+
       <div class="row" style="justify-content: center; margin-top: 1.5rem;">
         <a [routerLink]="['/municipal/track', submittedApplication.id]" class="btn">
           Track This Application &rarr;
         </a>
+        @if (submittedApplication.service.requiresAppointment) {
+          <a [routerLink]="['/municipal/portal']" [queryParams]="{ bookApp: submittedApplication.id }" class="btn outline">
+            Schedule Appointment
+          </a>
+        }
         <button class="btn outline" (click)="resetForm()">
           Submit Another Request
         </button>
@@ -44,10 +56,50 @@
 
         @if (selectedService) {
           <div class="selected-service-info">
-            <strong>Description:</strong> {{ selectedService.description }}<br />
-            <small class="muted">Estimated processing delay: {{ selectedService.processingDelayDays }} business days</small>
+            <div><strong>Description:</strong> {{ selectedService.description }}</div>
+            <div style="margin-top: 0.35rem;">
+              <strong>Estimated delay:</strong> {{ selectedService.processingDelayDays }} business days
+              @if (selectedService.requiresAppointment) {
+                &bull; <span style="color: var(--warning); font-weight: 600;">In-person appointment required</span>
+              }
+            </div>
+            @if (selectedService.requirements) {
+              <div style="margin-top: 0.5rem;">
+                <strong>Required Supporting Documents:</strong>
+                <ul>
+                  @for (req of parseRequirements(selectedService.requirements); track req) {
+                    <li>{{ req }}</li>
+                  }
+                </ul>
+              </div>
+            }
           </div>
         }
+      </div>
+
+      <div class="form-grid" style="margin-bottom: 1.25rem;">
+        <div>
+          <label for="citizenName">Full Name *</label>
+          <input
+            id="citizenName"
+            name="citizenName"
+            type="text"
+            [(ngModel)]="citizenName"
+            placeholder="e.g. Bilel Rebhi"
+            required
+          />
+        </div>
+        <div>
+          <label for="citizenEmail">Email Address *</label>
+          <input
+            id="citizenEmail"
+            name="citizenEmail"
+            type="email"
+            [(ngModel)]="citizenEmail"
+            placeholder="citizen@smartcity.tn"
+            required
+          />
+        </div>
       </div>
 
       <div style="margin-bottom: 1.25rem;">
@@ -58,11 +110,43 @@
             name="citizenId"
             type="text"
             [(ngModel)]="citizenId"
+            style="flex: 1;"
             placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
           />
-          <button type="button" class="btn outline small" (click)="generateCitizenId()">Generate</button>
+          <button type="button" class="btn outline small" (click)="generateCitizenId()">New UUID</button>
         </div>
-        <small class="muted">Leave blank or click Generate to create an anonymous citizen ID.</small>
+        <small class="muted">Your active Citizen ID is saved locally so you can view history &amp; notifications.</small>
+      </div>
+
+      <div style="margin-bottom: 1.25rem;">
+        <label for="notes">Additional Details / Notes</label>
+        <textarea
+          id="notes"
+          name="notes"
+          rows="3"
+          [(ngModel)]="notes"
+          placeholder="Specify any additional information or permit details..."
+        ></textarea>
+      </div>
+
+      <div style="margin-bottom: 1.25rem;">
+        <label for="docUpload">Attach Supporting Documents (PDF, Images, Docs)</label>
+        <input
+          id="docUpload"
+          type="file"
+          multiple
+          (change)="onFilesSelected($event)"
+        />
+        @if (selectedFiles.length > 0) {
+          <div class="file-list">
+            @for (file of selectedFiles; track $index) {
+              <div class="file-pill">
+                <span>📎 {{ file.name }} ({{ formatSize(file.size) }})</span>
+                <button type="button" class="btn danger small" (click)="removeFile($index)">Remove</button>
+              </div>
+            }
+          </div>
+        }
       </div>
 
       <div class="row" style="margin-top: 1.5rem; justify-content: flex-end;">

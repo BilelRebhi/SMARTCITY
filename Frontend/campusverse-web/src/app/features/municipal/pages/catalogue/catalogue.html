@@ -1,7 +1,7 @@
 <div class="catalogue-header">
   <div>
     <h1>Municipal Services Catalogue</h1>
-    <p class="muted">Explore municipal procedures, apply online, and track the progress of your requests.</p>
+    <p class="muted">Explore administrative services, check required supporting documents, and apply online.</p>
   </div>
   <div class="row">
     <a routerLink="/municipal/track" class="btn outline">Track an Application</a>
@@ -9,28 +9,62 @@
   </div>
 </div>
 
+<div class="card filter-bar">
+  <input
+    type="text"
+    [(ngModel)]="searchTerm"
+    placeholder="Search services or requirements..."
+  />
+  <select [(ngModel)]="selectedCategory">
+    <option value="">All Categories</option>
+    @for (cat of categories; track cat) {
+      <option [value]="cat">{{ cat }}</option>
+    }
+  </select>
+</div>
+
 @if (loading) {
   <div class="card">
     <p class="muted">Loading catalogue of services...</p>
   </div>
 } @else if (error) {
-  <div class="alert error">
-    {{ error }}
-  </div>
-} @else if (services.length === 0) {
+  <div class="alert error">{{ error }}</div>
+} @else if (filteredServices.length === 0) {
   <div class="card">
-    <p class="muted">No municipal services currently published.</p>
+    <p class="muted">No municipal services match your filter.</p>
   </div>
 } @else {
   <div class="catalogue-grid">
-    @for (s of services; track s.id) {
+    @for (s of filteredServices; track s.id) {
       <div class="card service-card">
         <div class="card-header">
+          <div class="card-badges">
+            @if (s.category) {
+              <span class="badge">{{ s.category }}</span>
+            }
+            @if (s.requiresAppointment) {
+              <span class="badge IN_REVIEW">In-Person Appointment</span>
+            } @else {
+              <span class="badge APPROVED">100% Online</span>
+            }
+          </div>
           <h3>{{ s.name }}</h3>
           <p class="muted">{{ s.description }}</p>
+
+          @if (s.requirements) {
+            <div class="requirements-box">
+              <strong>Required Documents:</strong>
+              <ul>
+                @for (req of parseRequirements(s.requirements); track req) {
+                  <li>{{ req }}</li>
+                }
+              </ul>
+            </div>
+          }
+
           <div class="delay-tag">
             <span>⏱️</span>
-            <span>Estimated delay: <strong>{{ s.processingDelayDays }} days</strong></span>
+            <span>Estimated delay: <strong>{{ s.processingDelayDays }} business days</strong></span>
           </div>
         </div>
         <div class="card-footer">

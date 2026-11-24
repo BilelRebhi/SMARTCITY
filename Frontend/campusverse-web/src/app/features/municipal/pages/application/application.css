@@ -1,14 +1,38 @@
 .form-container {
-  max-width: 680px;
+  max-width: 720px;
   margin: 0 auto;
 }
 
 .selected-service-info {
   background: var(--bg);
   border: 1px solid var(--border);
-  padding: 0.85rem;
+  padding: 0.9rem;
   border-radius: 6px;
   margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.selected-service-info ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.file-list {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.file-pill {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
 }
 
 .success-box {

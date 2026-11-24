@@ -4,12 +4,28 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.filter-bar input {
+  flex: 1;
+  min-width: 240px;
+}
+
+.filter-bar select {
+  width: 220px;
 }
 
 .catalogue-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
   gap: 1.5rem;
 }
 
@@ -25,10 +41,36 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+.card-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+
 .card-header h3 {
   margin: 0 0 0.5rem;
   color: var(--primary);
   font-size: 1.15rem;
+}
+
+.requirements-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.requirements-box strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.requirements-box ul {
+  margin: 0;
+  padding-left: 1.15rem;
 }
 
 .delay-tag {

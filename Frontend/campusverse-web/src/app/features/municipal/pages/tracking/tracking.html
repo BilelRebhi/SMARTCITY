@@ -1,6 +1,6 @@
 <div class="tracking-container">
   <h1>Track Municipal Application</h1>
-  <p class="muted">Check the real-time processing status of your municipal requests.</p>
+  <p class="muted">Check the real-time processing status, upload missing documents, or manage appointments.</p>
 
   <div class="card search-box">
     <form (ngSubmit)="onSearch()" class="row">
@@ -26,7 +26,7 @@
     <div class="card result-card">
       <div class="row" style="justify-content: space-between;">
         <div>
-          <h2>{{ application.service.name }}</h2>
+          <h2 style="margin-top: 0;">{{ application.service.name }}</h2>
           <small class="muted">Application ID: {{ application.id }}</small>
         </div>
         <span class="badge" [class]="application.status">
@@ -34,15 +34,33 @@
         </span>
       </div>
 
+      @if (application.status === 'MISSING_DOCUMENTS') {
+        <div class="alert" style="background: #fff4e0; color: var(--warning); border: 1px solid #f2d59b; margin-top: 1rem;">
+          <strong>Action Required — Missing Documents:</strong>
+          {{ application.adminComment || 'Please upload the required supporting documents below to continue processing.' }}
+        </div>
+      } @else if (application.adminComment) {
+        <div class="alert" style="background: #f0f3fa; border: 1px solid var(--border); margin-top: 1rem;">
+          <strong>Administrative Note:</strong> {{ application.adminComment }}
+        </div>
+      }
+
       <!-- Stepper Visualizer -->
       <div class="stepper">
         <div class="step-item" [class.completed]="isStepCompleted(1)" [class.active]="isStepActive(1)">
           <div class="step-circle">1</div>
           <div class="step-label">Submitted</div>
         </div>
-        <div class="step-item" [class.completed]="isStepCompleted(2)" [class.active]="isStepActive(2)">
-          <div class="step-circle">2</div>
-          <div class="step-label">In Review</div>
+        <div
+          class="step-item"
+          [class.completed]="isStepCompleted(2)"
+          [class.active]="isStepActive(2)"
+          [class.warning]="application.status === 'MISSING_DOCUMENTS'"
+        >
+          <div class="step-circle">{{ application.status === 'MISSING_DOCUMENTS' ? '!' : '2' }}</div>
+          <div class="step-label">
+            {{ application.status === 'MISSING_DOCUMENTS' ? 'Missing Docs' : 'Validation & Review' }}
+          </div>
         </div>
         <div
           class="step-item"
@@ -54,7 +72,7 @@
             {{ application.status === 'REJECTED' ? '✕' : '3' }}
           </div>
           <div class="step-label">
-            {{ application.status === 'REJECTED' ? 'Rejected' : 'Completed / Approved' }}
+            {{ application.status === 'REJECTED' ? 'Rejected' : 'Approved / Completed' }}
           </div>
         </div>
       </div>
@@ -62,31 +80,67 @@
       <!-- Details -->
       <div class="details-grid">
         <div>
+          <label>Applicant</label>
+          <p>{{ application.citizenName || 'Anonymous' }} <br /><small class="muted">{{ application.citizenEmail || '' }}</small></p>
+        </div>
+        <div>
           <label>Estimated Processing Time</label>
           <p>{{ application.service.processingDelayDays }} business days</p>
         </div>
         <div>
-          <label>Citizen ID</label>
-          <p style="font-family: monospace; font-size: 0.85rem; word-break: break-all;">
-            {{ application.citizenId }}
-          </p>
+          <label>Completeness Validation</label>
+          <p>{{ application.validatedComplete ? '✅ Validated Complete' : '⏳ Pending Validation' }}</p>
         </div>
         <div>
-          <label>Service Description</label>
-          <p>{{ application.service.description }}</p>
+          <label>Submitted At</label>
+          <p>{{ application.submittedAt ? (application.submittedAt | date:'medium') : '—' }}</p>
         </div>
       </div>
 
-      <!-- Quick status simulation/admin control -->
-      <div class="admin-actions">
-        <label>Simulate Status Update:</label>
-        <div class="row" style="margin-top: 0.5rem;">
-          <button class="btn outline small" (click)="updateStatus('PENDING')">Set Pending</button>
-          <button class="btn outline small" (click)="updateStatus('IN_REVIEW')">Set In Review</button>
-          <button class="btn small" style="background: var(--success); border-color: var(--success);" (click)="updateStatus('APPROVED')">Approve</button>
-          <button class="btn small" style="background: var(--primary); border-color: var(--primary);" (click)="updateStatus('COMPLETED')">Complete</button>
-          <button class="btn small danger" (click)="updateStatus('REJECTED')">Reject</button>
+      <!-- Supporting Documents -->
+      <div class="section-block">
+        <div class="row" style="justify-content: space-between;">
+          <h3 style="margin: 0;">Supporting Documents ({{ documents.length }})</h3>
+          <label class="btn outline small" style="margin: 0; cursor: pointer;">
+            + Upload Document
+            <input type="file" style="display: none;" (change)="onUploadDoc($event)" />
+          </label>
         </div>
+
+        @if (documents.length === 0) {
+          <p class="muted" style="margin-top: 0.5rem;">No supporting documents uploaded yet.</p>
+        } @else {
+          @for (doc of documents; track doc.id) {
+            <div class="doc-item">
+              <span>📄 {{ doc.fileName }} <small class="muted">({{ (doc.fileSize / 1024).toFixed(1) }} KB)</small></span>
+              <a [href]="getDownloadUrl(doc.id)" target="_blank" class="btn outline small">Download</a>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Appointments -->
+      <div class="section-block">
+        <div class="row" style="justify-content: space-between;">
+          <h3 style="margin: 0;">In-Person Appointments</h3>
+          <a [routerLink]="['/municipal/portal']" [queryParams]="{ bookApp: application.id }" class="btn small outline">
+            Schedule Appointment
+          </a>
+        </div>
+        @if (appointments.length === 0) {
+          <p class="muted" style="margin-top: 0.5rem;">
+            {{ application.service.requiresAppointment
+              ? 'This service requires an in-person visit. Click "Schedule Appointment" to book a slot.'
+              : 'No appointments scheduled for this request.' }}
+          </p>
+        } @else {
+          @for (apt of appointments; track apt.id) {
+            <div class="doc-item">
+              <span>📅 {{ apt.appointmentDate }} &bull; {{ apt.timeSlot }} &bull; {{ apt.location }}</span>
+              <span class="badge" [class]="apt.status === 'CANCELLED' ? 'REJECTED' : 'APPROVED'">{{ apt.status }}</span>
+            </div>
+          }
+        }
       </div>
     </div>
   }

@@ -1,0 +1,166 @@
+<div>
+  <div class="row" style="justify-content: space-between; margin-bottom: 1.5rem;">
+    <div>
+      <h1>Citizen Portal</h1>
+      <p class="muted">View your request history, administrative notifications, and book in-person appointments.</p>
+    </div>
+    <div class="row">
+      <input
+        type="text"
+        [(ngModel)]="citizenId"
+        placeholder="Citizen UUID"
+        style="width: 310px;"
+      />
+      <button class="btn small" (click)="loadAll()">Load Profile</button>
+    </div>
+  </div>
+
+  @if (errorMessage) {
+    <div class="alert error">{{ errorMessage }}</div>
+  }
+  @if (successMessage) {
+    <div class="alert success">{{ successMessage }}</div>
+  }
+
+  <div class="portal-grid">
+    <!-- 8. Administrative Notifications -->
+    <section class="card">
+      <div class="row" style="justify-content: space-between; margin-bottom: 1rem;">
+        <h2 style="margin: 0;">Administrative Notifications ({{ unreadCount }} unread)</h2>
+        <button class="btn outline small" (click)="loadNotifications()">Refresh</button>
+      </div>
+
+      @if (notifications.length === 0) {
+        <p class="muted">No notifications for this citizen ID yet.</p>
+      } @else {
+        @for (n of notifications; track n.id) {
+          <div class="notif-item" [class]="n.type" [class.read]="n.read">
+            <div>
+              <strong>{{ n.title }}</strong>
+              <p style="margin: 0.25rem 0;">{{ n.message }}</p>
+              <small class="muted">{{ n.createdAt | date:'medium' }}</small>
+            </div>
+            @if (!n.read) {
+              <button class="btn outline small" (click)="markRead(n.id)">Mark Read</button>
+            }
+          </div>
+        }
+      }
+    </section>
+
+    <!-- 9. Request History -->
+    <section class="card">
+      <div class="row" style="justify-content: space-between; margin-bottom: 1rem;">
+        <h2 style="margin: 0;">Request History ({{ applications.length }})</h2>
+        <a routerLink="/municipal/apply" class="btn small">+ New Request</a>
+      </div>
+
+      @if (applications.length === 0) {
+        <p class="muted">No previous applications found for this citizen ID.</p>
+      } @else {
+        <table>
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Status</th>
+              <th>Submitted</th>
+              <th>Decision / Note</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (app of applications; track app.id) {
+              <tr>
+                <td><strong>{{ app.service.name }}</strong></td>
+                <td><span class="badge" [class]="app.status">{{ app.status }}</span></td>
+                <td>{{ app.submittedAt ? (app.submittedAt | date:'short') : '—' }}</td>
+                <td>{{ app.adminComment || '—' }}</td>
+                <td class="row">
+                  <a [routerLink]="['/municipal/track', app.id]" class="btn outline small">Track</a>
+                  <button class="btn small" (click)="prefillAppointment(app.id)">Book Visit</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+
+    <!-- 7. Appointment Scheduling -->
+    <section class="card">
+      <h2 style="margin-top: 0;">Appointment Scheduling</h2>
+      <p class="muted">Book an in-person visit for municipal services or manage upcoming appointments.</p>
+
+      <form (ngSubmit)="bookAppointment()" class="form-grid" style="margin-bottom: 1.5rem;">
+        <div>
+          <label for="aptApp">Application *</label>
+          <select id="aptApp" [(ngModel)]="appointmentForm.applicationId" name="applicationId" required>
+            <option value="" disabled>-- Select an application --</option>
+            @for (app of applications; track app.id) {
+              <option [value]="app.id">
+                {{ app.service.name }} ({{ app.status }})
+              </option>
+            }
+          </select>
+        </div>
+        <div>
+          <label for="aptDate">Date *</label>
+          <input id="aptDate" type="date" [(ngModel)]="appointmentForm.appointmentDate" name="appointmentDate" required />
+        </div>
+        <div>
+          <label for="aptSlot">Time Slot *</label>
+          <select id="aptSlot" [(ngModel)]="appointmentForm.timeSlot" name="timeSlot" required>
+            <option value="09:00 - 09:30">09:00 - 09:30</option>
+            <option value="10:00 - 10:30">10:00 - 10:30</option>
+            <option value="11:30 - 12:00">11:30 - 12:00</option>
+            <option value="14:00 - 14:30">14:00 - 14:30</option>
+            <option value="15:30 - 16:00">15:30 - 16:00</option>
+          </select>
+        </div>
+        <div>
+          <label for="aptLoc">Location</label>
+          <input id="aptLoc" type="text" [(ngModel)]="appointmentForm.location" name="location" />
+        </div>
+        <div class="full row" style="justify-content: flex-end;">
+          <button type="submit" class="btn" [disabled]="!appointmentForm.applicationId || !appointmentForm.appointmentDate">
+            Book Appointment
+          </button>
+        </div>
+      </form>
+
+      <h3>Scheduled Appointments ({{ appointments.length }})</h3>
+      @if (appointments.length === 0) {
+        <p class="muted">No appointments scheduled.</p>
+      } @else {
+        <table>
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Date</th>
+              <th>Time Slot</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (apt of appointments; track apt.id) {
+              <tr>
+                <td>{{ apt.application.service.name }}</td>
+                <td>{{ apt.appointmentDate }}</td>
+                <td>{{ apt.timeSlot }}</td>
+                <td>{{ apt.location }}</td>
+                <td><span class="badge" [class]="apt.status === 'CANCELLED' ? 'REJECTED' : 'APPROVED'">{{ apt.status }}</span></td>
+                <td>
+                  @if (apt.status === 'SCHEDULED') {
+                    <button class="btn danger small" (click)="cancelAppointment(apt.id)">Cancel</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  </div>
+</div>
