@@ -1,5 +1,6 @@
 package com.campusverse.ecocity.controller;
 
+import com.campusverse.ecocity.dto.ZoneConditionsResponse;
 import com.campusverse.ecocity.dto.ZoneRequest;
 import com.campusverse.ecocity.dto.ZoneResponse;
 import com.campusverse.ecocity.service.ZoneService;
@@ -26,6 +27,13 @@ public class ZoneController {
     @GetMapping
     public List<ZoneResponse> findAll() {
         return zoneService.findAll();
+    }
+
+    @Operation(summary = "GET /api/zones/my-zone/conditions",
+            description = "Conditions in the citizen's zone (calls MS1). Responses: 200, 404, 503 MS1 unavailable")
+    @GetMapping("/my-zone/conditions")
+    public ZoneConditionsResponse myZoneConditions(@RequestHeader("X-Citizen-Id") Long citizenId) {
+        return zoneService.getMyZoneConditions(citizenId);
     }
 
     @Operation(summary = "GET /api/zones/{id}", description = "Responses: 200, 404")

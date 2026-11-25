@@ -6,6 +6,7 @@ import com.campusverse.ecocity.entity.Measurement;
 import com.campusverse.ecocity.entity.PollutionAlert;
 import com.campusverse.ecocity.entity.Threshold;
 import com.campusverse.ecocity.enums.AlertStatus;
+import com.campusverse.ecocity.event.AlertEventPublisher;
 import com.campusverse.ecocity.exception.BusinessRuleException;
 import com.campusverse.ecocity.exception.InvalidRequestException;
 import com.campusverse.ecocity.exception.ResourceNotFoundException;
@@ -29,6 +30,7 @@ public class PollutionAlertServiceImpl implements PollutionAlertService {
     private final PollutionAlertRepository alertRepository;
     private final MeasurementRepository measurementRepository;
     private final ThresholdRepository thresholdRepository;
+    private final AlertEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -77,7 +79,9 @@ public class PollutionAlertServiceImpl implements PollutionAlertService {
         alert.setValue(measurement.getValue());
         alert.setSeverity(threshold.getSeverity());
         alert.setTriggeredAt(LocalDateTime.now());
-        return EcoCityMapper.toResponse(alertRepository.save(alert));
+        alertRepository.save(alert);
+        eventPublisher.alertRaised(alert);
+        return EcoCityMapper.toResponse(alert);
     }
 
     @Override
@@ -91,6 +95,9 @@ public class PollutionAlertServiceImpl implements PollutionAlertService {
         if (!changed) {
             throw new BusinessRuleException("Alert " + id + " cannot go from " + alert.getStatus() + " to " + status
                     + " (allowed: OPEN -> ACKNOWLEDGED -> RESOLVED, or OPEN -> RESOLVED)");
+        }
+        if (status == AlertStatus.RESOLVED) {
+            eventPublisher.alertResolved(alert);
         }
         return EcoCityMapper.toResponse(alert);
     }

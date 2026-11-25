@@ -73,7 +73,7 @@ All routes go through the API Gateway and require a Keycloak JWT.
 | GET | `/api/pollution-alerts?status=&zoneId=` | List alerts | `200` |
 | PATCH | `/api/pollution-alerts/{id}/status` | Acknowledge / resolve an alert | `200`, `404`, `409` invalid transition |
 | GET | `/api/zones/compare?zoneIds=&indicator=&from=&to=` | Compare zones | `200`, `400`, `404` |
-| GET | `/api/zones/my-zone/conditions` | Conditions in the signed-in citizen's zone (calls MS1) | `200`, `404`, `503` MS1 unavailable |
+| GET | `/api/zones/my-zone/conditions` | Conditions in the signed-in citizen's zone (header `X-Citizen-Id`, set by the Gateway; calls MS1) | `200`, `404`, `503` MS1 unavailable |
 | GET | `/api/environmental-reports?zoneId=&from=&to=` | Generate / read a report | `200`, `400`, `404` |
 
 Common error codes: `401` missing or invalid token, `403` role not allowed.

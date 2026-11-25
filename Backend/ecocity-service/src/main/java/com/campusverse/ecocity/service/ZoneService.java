@@ -1,5 +1,6 @@
 package com.campusverse.ecocity.service;
 
+import com.campusverse.ecocity.dto.ZoneConditionsResponse;
 import com.campusverse.ecocity.dto.ZoneRequest;
 import com.campusverse.ecocity.dto.ZoneResponse;
 
@@ -16,4 +17,7 @@ public interface ZoneService {
     ZoneResponse update(Long id, ZoneRequest request);
 
     void delete(Long id);
+
+    /** Conditions in the citizen's zone. Asks MS1 for the citizen's neighborhood. */
+    ZoneConditionsResponse getMyZoneConditions(Long citizenId);
 }

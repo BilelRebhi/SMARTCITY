@@ -54,6 +54,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "Malformed request: check the JSON body and parameter types", req, null);
     }
 
+    @ExceptionHandler(ExternalServiceException.class)
+    public ResponseEntity<ErrorResponse> unavailable(ExternalServiceException ex, HttpServletRequest req) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), req, null);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> other(Exception ex, HttpServletRequest req) {
         log.error("Unexpected error on {}", req.getRequestURI(), ex);

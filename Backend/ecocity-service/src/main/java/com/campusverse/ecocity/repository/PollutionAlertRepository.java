@@ -13,4 +13,6 @@ public interface PollutionAlertRepository extends JpaRepository<PollutionAlert, 
 
     /** Used to keep only one OPEN alert per station and indicator. */
     boolean existsByMeasurementStationIdAndIndicatorAndStatus(Long stationId, Indicator indicator, AlertStatus status);
+
+    long countByStatusAndMeasurementStationZoneId(AlertStatus status, Long zoneId);
 }
