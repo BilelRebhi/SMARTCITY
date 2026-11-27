@@ -32,6 +32,16 @@ public class ApiGatewayApplication {
                               "/api/resolution-confirmations", "/api/resolution-confirmations/**")
                         .uri("lb://urban-incident"))
 
+                // MS4 - EcoCity & Environmental Monitoring Service
+                .route("ecocity-service", r -> r
+                        .path("/api/zones", "/api/zones/**",
+                              "/api/monitoring-stations", "/api/monitoring-stations/**",
+                              "/api/readings", "/api/readings/**",
+                              "/api/thresholds", "/api/thresholds/**",
+                              "/api/pollution-alerts", "/api/pollution-alerts/**",
+                              "/api/environmental-reports", "/api/environmental-reports/**")
+                        .uri("lb://ecocity-service"))
+
                 .build();
     }
 }
